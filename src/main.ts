@@ -1,26 +1,34 @@
 import * as THREE from "three";
 import * as world from "./world";
 import * as voxel from "./voxel";
-import * as _playerEntity from "./playerEntity";
+import {_playerEntity, setFirstPersonMode} from "./playerEntity";
 import * as _events from "./events";
+import {setEntityPosition} from './entities/entities'
+import {type CameraEntity, createCameraEntity} from './entities/camera'
+import { createCameraComponent } from './components/camera'
 
 const scene = new THREE.Scene();
 const uiScene = new THREE.Scene();
 const clock = new THREE.Clock();
 let RENDER_DISTANCE = 10;
 
-const camera = new THREE.PerspectiveCamera(
+const cameraType = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
 
-const playerEntity = _playerEntity.playerEntity;
-playerEntity.setCamera(camera);
+const _camera: CameraEntity = createCameraEntity(createCameraComponent(cameraType))
 
-camera.position.set(0, 10, 20);
-camera.lookAt(0, 0, 0);
+const playerEntity = _playerEntity;
+setFirstPersonMode(playerEntity, _camera);
+
+
+//console.log("Camera type", _camera.type);
+
+_camera.transform?.position.set(0, 10, 20);
+_camera.type.lookAt(0, 0, 0);
 scene.background = new THREE.Color(0x87ceeb);
 
 
@@ -65,14 +73,14 @@ fpsSprite.position.set(
 
 uiScene.add(fpsSprite);
 
-// ====================
-// Resize
-// ====================
-
+// Resize window
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-
+  
+  //This doesn't work with other cameras
+  _camera.type.aspect = window.innerWidth / window.innerHeight;
+  _camera.type.updateProjectionMatrix();
+  
+  
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   uiCamera.right = window.innerWidth;
@@ -94,16 +102,22 @@ document.addEventListener("pointerlockchange", () => {
     const locked = document.pointerLockElement === renderer.domElement;
     //console.log(locked ? "Mouse locked" : "Mouse unlocked");
 
-    if (!locked) {
-        playerEntity.components.cameraRotationLocked = true;
-        playerEntity.components.cameraMovementLocked = true;
-        playerEntity.components.movementLocked = true;
-        playerEntity.components.rotationLocked = true;
-    } else {
-        playerEntity.components.cameraRotationLocked = false;
-        playerEntity.components.cameraMovementLocked = false;
-        playerEntity.components.movementLocked = false;
-        playerEntity.components.rotationLocked = false;
+    if(playerEntity.transform) {
+      playerEntity.transform.rotation.enabled = locked;
+      //console.log("Player rotation enabled? ", locked ? true:false);
+    }
+    if(playerEntity.physics) {
+      playerEntity.physics.enabled = locked;
+      //console.log("Player movement enabled? ", locked ? true:false);
+    } 
+
+    if(playerEntity.camera && playerEntity.camera.transform) {
+      playerEntity.camera.transform.rotation.enabled = locked;
+      //console.log("Camera rotation enabled? ", playerEntity.camera.transform.rotation.enabled ? true:false);
+    }
+    if(playerEntity.camera && playerEntity.camera.physics) {
+      playerEntity.camera.physics.enabled = locked;
+      //console.log("Camera movement enabled? ", locked ? true:false);
     }
 });
 
@@ -126,9 +140,9 @@ function initGame() {
 
     const end = performance.now();
 
-    playerEntity.setPosition(0, 2, 0);
+    setEntityPosition(playerEntity, 0, 2, 0);
 
-    console.log(`initGame: ${(end - start).toFixed(2)} ms to instantiate ${voxelsCount} voxels`);
+    //console.log(`initGame: ${(end - start).toFixed(2)} ms to instantiate ${voxelsCount} voxels`);
 }
 
 window.addEventListener("keydown", e => {
@@ -177,7 +191,7 @@ function gameLoop() {
   
 
 
-  renderer.render(scene, camera);
+  renderer.render(scene, _camera.type);
   renderer.render(uiScene, uiCamera);
 }
 

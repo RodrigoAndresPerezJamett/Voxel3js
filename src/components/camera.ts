@@ -1,39 +1,37 @@
 import * as THREE from 'three';
-import { type entityId } from '../entities/entities';
+import { type EntityId } from '../entities/entities';
 
 
 // Components
 
 export type CameraType =
   | THREE.PerspectiveCamera
-  | THREE.OrthographicCamera
-  | THREE.CubeCamera
-  | THREE.ArrayCamera
-  | THREE.Camera;
+//  | THREE.OrthographicCamera
 
 export type CameraMode = 'firstPerson' | 'thirdPerson';
 
 export type CameraInstanceComponent = {
-  instance: CameraType;
+  type: CameraType;
   mode: CameraMode;
 };
 
+// Maybe we shouldn't have this... It may go against ECS methodology... and it creates overhead because we will have to de-couple it in case the enitityId is no longer valid
 export type CameraAttachmentComponent = {
-  attachedTo: entityId;
+  attachedTo: EntityId;
 };
 
 export function createCameraComponent(
-  instance: CameraType = new THREE.PerspectiveCamera(),
+  type: CameraType = new THREE.PerspectiveCamera(),
   mode: CameraMode = 'firstPerson'
 ): CameraInstanceComponent {
   return {
-    instance,
+    type,
     mode,
   };
 }
 
 export function createCameraAttachment(
-  attachedTo: entityId
+  attachedTo: EntityId
 ): CameraAttachmentComponent {
   return {
     attachedTo,
