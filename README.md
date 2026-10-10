@@ -15,6 +15,9 @@
 ### 1. Install dependencies
 ```bash
 bun install
+```
+
 ### 2. Run in local
 ```bash
 bun run dev
+```
